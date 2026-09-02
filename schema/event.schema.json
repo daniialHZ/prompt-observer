@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prompt-observer.local/schema/event-1.0.json",
+  "title": "Prompt Observer Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "timestamp",
+    "task_type",
+    "prompt_summary",
+    "intent_clarity",
+    "context_sufficiency",
+    "scope_definition",
+    "constraints_quality",
+    "acceptance_criteria",
+    "verification_plan",
+    "ambiguity_risk",
+    "strengths",
+    "weaknesses",
+    "improvement_suggestions",
+    "execution_signals",
+    "usage"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "event_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$"
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "task_type": {
+      "enum": [
+        "coding",
+        "debugging",
+        "planning",
+        "review",
+        "testing",
+        "documentation",
+        "refactoring",
+        "other"
+      ]
+    },
+    "prompt_summary": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "intent_clarity": { "$ref": "#/$defs/score" },
+    "context_sufficiency": { "$ref": "#/$defs/score" },
+    "scope_definition": { "$ref": "#/$defs/score" },
+    "constraints_quality": { "$ref": "#/$defs/score" },
+    "acceptance_criteria": { "$ref": "#/$defs/score" },
+    "verification_plan": { "$ref": "#/$defs/score" },
+    "ambiguity_risk": { "enum": ["low", "medium", "high"] },
+    "strengths": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/shortText" },
+      "maxItems": 10
+    },
+    "weaknesses": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["category", "severity", "message"],
+        "properties": {
+          "category": {
+            "enum": [
+              "missing_context",
+              "ambiguous_goal",
+              "undefined_scope",
+              "missing_constraints",
+              "missing_acceptance_criteria",
+              "missing_verification",
+              "missing_output_format",
+              "conflicting_requirements",
+              "other"
+            ]
+          },
+          "severity": { "enum": ["low", "medium", "high"] },
+          "message": { "$ref": "#/$defs/shortText" }
+        }
+      }
+    },
+    "improvement_suggestions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/shortText" },
+      "maxItems": 10
+    },
+    "execution_signals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result_status", "files_changed", "tests_run"],
+      "properties": {
+        "result_status": { "enum": ["completed", "partial", "blocked"] },
+        "files_changed": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "maxItems": 500
+        },
+        "tests_run": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "status"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1, "maxLength": 500 },
+              "status": { "enum": ["passed", "failed", "not_run", "unknown"] }
+            }
+          }
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "input_tokens",
+        "output_tokens",
+        "cost_usd",
+        "source",
+        "estimation_method"
+      ],
+      "properties": {
+        "model": { "type": ["string", "null"], "maxLength": 200 },
+        "input_tokens": { "type": ["integer", "null"], "minimum": 0 },
+        "output_tokens": { "type": ["integer", "null"], "minimum": 0 },
+        "cost_usd": { "type": ["number", "null"], "minimum": 0 },
+        "source": { "enum": ["platform_reported", "estimated", "unavailable"] },
+        "estimation_method": { "type": ["string", "null"], "maxLength": 300 }
+      }
+    }
+  },
+  "$defs": {
+    "score": { "type": "integer", "minimum": 0, "maximum": 10 },
+    "shortText": { "type": "string", "minLength": 1, "maxLength": 500 }
+  }
+}

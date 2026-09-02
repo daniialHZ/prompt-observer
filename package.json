@@ -1,0 +1,32 @@
+{
+  "name": "@onthink/prompt-observer",
+  "version": "0.1.0",
+  "description": "A dependency-free prompt observability contract and CLI for coding agents.",
+  "keywords": [
+    "ai",
+    "coding-agents",
+    "prompt-engineering",
+    "observability",
+    "vibe-coding"
+  ],
+  "type": "module",
+  "bin": {
+    "prompt-observer": "./bin/prompt-observer.mjs"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check bin/prompt-observer.mjs",
+    "prepublishOnly": "npm run check && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "files": [
+    "bin/",
+    "schema/",
+    "PROMPT_OBSERVER.md",
+    "README.md",
+    "LICENSE"
+  ]
+}
