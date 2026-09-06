@@ -4,6 +4,8 @@ Prompt Observer is a dependency-free observability kit for professional coding-a
 
 It is designed for Vibe Coding workflows and works without a browser extension, a local model, or an additional AI API. The agent already completing the task creates the observation.
 
+[View the package on npm](https://www.npmjs.com/package/@onthink/prompt-observer)
+
 ## What it records
 
 - Prompt-quality dimensions: clarity, context, scope, constraints, acceptance criteria, and verification plan
@@ -21,13 +23,14 @@ Raw prompts, raw responses, private reasoning, system instructions, and secrets 
 
 ## Quick start
 
-Clone this repository and initialize Prompt Observer in a target project:
+Initialize Prompt Observer in any target project:
 
 ```powershell
-git clone <your-repository-url>
-cd prompt-observer
-node bin/prompt-observer.mjs init "E:\path\to\your-project"
+cd "E:\path\to\your-project"
+npx @onthink/prompt-observer init .
 ```
+
+`init` adds a portable local CLI under `.prompt-observer`, so the target project can log events and generate reports without a global installation.
 
 Then add the following one-line instruction to the target project's existing agent-instruction file:
 
@@ -78,17 +81,17 @@ The report includes average prompt health, recurring weaknesses, ambiguity risk,
 
 When an agent cannot write files, the contract requires it to show the three-line insight and return a complete valid JSON event in a fenced `json` block. It must state that the event was not persisted. A later extension or integration can capture that output automatically.
 
-## npm package — coming soon
+## npm package
 
-The project is configured for npm packaging, but it is **not published yet**. The final package name will be chosen before release, preferably as a scoped name such as `@your-npm-username/prompt-observer`.
+Prompt Observer is published as [`@onthink/prompt-observer`](https://www.npmjs.com/package/@onthink/prompt-observer).
 
-After publication, the intended installation flow will be:
+Use it without installing it globally:
 
 ```powershell
-npx @your-npm-username/prompt-observer init .
+npx @onthink/prompt-observer init .
 ```
 
-Before publishing, replace `@your-npm-username` with your real npm scope and configure the repository URL in `package.json`.
+Running `init` again is safe: it preserves existing Prompt Observer files and adds only missing files.
 
 ## Development
 
@@ -97,7 +100,7 @@ npm run check
 npm test
 ```
 
-`prepublishOnly` runs both checks automatically before `npm publish`. The package uses only Node.js built-ins; JSONL is the source of truth for v1, while SQLite export is intentionally deferred to a later release.
+`prepublishOnly` runs both checks automatically before `npm publish`. The package is published publicly under the `@onthink` scope. The project uses only Node.js built-ins; JSONL is the source of truth for v1, while SQLite export is intentionally deferred to a later release.
 
 ## License
 
