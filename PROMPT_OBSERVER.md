@@ -10,6 +10,8 @@ Follow this contract after every user-requested task. Complete the task first, t
 4. Do not invent the model name, token counts, or cost. Use `null` values with `source: "unavailable"` unless the platform explicitly reports them. Use `source: "estimated"` only when a deterministic tokenizer or pricing tool produced the value, and name that tool in `estimation_method`.
 5. Base execution signals only on observed results. Do not claim a file changed or a test passed without evidence.
 6. Use schema version `1.0` and conform to `.prompt-observer/event.schema.json`.
+7. Do not manufacture criticism. If the prompt is clear and sufficient for the task, keep `weaknesses` and `improvement_suggestions` empty.
+8. Evaluate against objective task requirements, not personal preferences about wording, tone, verbosity, formatting, workflow, or technology choices.
 
 ## Required workflow
 
@@ -30,7 +32,7 @@ After completing a task:
    ```text
    Prompt Insight: <average>/10 — <short strength>
    Main weakness: <highest-impact weakness, or "No material weakness detected">
-   Next time: <one actionable improvement>
+   Next time: <one actionable improvement, or "No change needed">
    ```
 
 Do not paste the complete JSON event into the user-facing response when persistence succeeds.
@@ -51,6 +53,15 @@ If writing files or running the logger is unavailable, do not pretend the event 
 
 Score only prompt quality. Do not lower a score because implementation was difficult when the request itself was clear.
 
+## Evidence threshold and neutrality
+
+- Record a weakness only when a concrete omission, ambiguity, contradiction, or constraint creates a meaningful risk of wrong execution, wasted work, or unverifiable completion.
+- Do not require context, constraints, acceptance criteria, output formatting, or tests when they are unnecessary for the specific task.
+- Do not criticize a prompt merely because it could be longer, more formal, more structured, or written in a style you prefer.
+- Do not turn optional enhancements into weaknesses.
+- When no material weakness exists, use an empty `weaknesses` array, an empty `improvement_suggestions` array, `Main weakness: No material weakness detected`, and `Next time: No change needed`.
+- Positive scores must reflect the prompt as written; do not lower them just to create variation or appear critical.
+
 ## Event example
 
 ```json
@@ -60,26 +71,18 @@ Score only prompt quality. Do not lower a score because implementation was diffi
   "timestamp": "2026-09-01T12:00:00.000Z",
   "task_type": "coding",
   "prompt_summary": "Implement a dependency-free prompt observation kit with structured local logging.",
-  "intent_clarity": 9,
-  "context_sufficiency": 8,
-  "scope_definition": 9,
-  "constraints_quality": 9,
-  "acceptance_criteria": 8,
-  "verification_plan": 7,
+  "intent_clarity": 10,
+  "context_sufficiency": 10,
+  "scope_definition": 10,
+  "constraints_quality": 10,
+  "acceptance_criteria": 9,
+  "verification_plan": 9,
   "ambiguity_risk": "low",
   "strengths": [
     "The requested deliverables and runtime constraints are explicit."
   ],
-  "weaknesses": [
-    {
-      "category": "missing_verification",
-      "severity": "low",
-      "message": "The exact expected report contents were not fully enumerated."
-    }
-  ],
-  "improvement_suggestions": [
-    "List the required report sections and one expected example."
-  ],
+  "weaknesses": [],
+  "improvement_suggestions": [],
   "execution_signals": {
     "result_status": "completed",
     "files_changed": [

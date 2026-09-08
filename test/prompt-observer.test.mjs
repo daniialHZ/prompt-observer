@@ -27,14 +27,8 @@ function validEvent(overrides = {}) {
     verification_plan: 6,
     ambiguity_risk: "low",
     strengths: ["The intended outcome is clear."],
-    weaknesses: [
-      {
-        category: "missing_verification",
-        severity: "medium",
-        message: "The exact verification command is not specified.",
-      },
-    ],
-    improvement_suggestions: ["Name the command that must pass."],
+    weaknesses: [],
+    improvement_suggestions: [],
     execution_signals: {
       result_status: "completed",
       files_changed: ["README.md"],
@@ -54,6 +48,20 @@ function validEvent(overrides = {}) {
 
 test("accepts a valid event", () => {
   assert.deepEqual(validateEvent(validEvent()), []);
+});
+
+test("accepts a strong prompt without forced weaknesses or suggestions", () => {
+  const event = validEvent({
+    intent_clarity: 10,
+    context_sufficiency: 10,
+    scope_definition: 10,
+    constraints_quality: 10,
+    acceptance_criteria: 10,
+    verification_plan: 10,
+    weaknesses: [],
+    improvement_suggestions: [],
+  });
+  assert.deepEqual(validateEvent(event), []);
 });
 
 test("rejects missing, unknown, and raw-content fields", () => {
@@ -124,7 +132,16 @@ test("logs valid events and rejects duplicate IDs", async () => {
 });
 
 test("builds and writes an aggregate Markdown report", async () => {
-  const first = validEvent();
+  const first = validEvent({
+    weaknesses: [
+      {
+        category: "missing_verification",
+        severity: "medium",
+        message: "The exact verification command is not specified.",
+      },
+    ],
+    improvement_suggestions: ["Name the command that must pass."],
+  });
   const second = validEvent({
     event_id: "evt-test-00000002",
     intent_clarity: 5,

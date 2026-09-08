@@ -15,6 +15,8 @@ It is designed for Vibe Coding workflows and works without a browser extension, 
 
 Raw prompts, raw responses, private reasoning, system instructions, and secrets are prohibited from the event format.
 
+Prompt Observer does not force criticism. A clear, sufficient prompt receives no fabricated weakness or subjective style advice; its `weaknesses` and `improvement_suggestions` arrays remain empty.
+
 ## Requirements
 
 - Node.js 20 or newer
