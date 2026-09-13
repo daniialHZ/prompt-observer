@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-09-13",
+  "currency": "USD",
+  "unit_tokens": 1000000,
+  "source_url": "https://developers.openai.com/api/docs/models/compare",
+  "notes": "Standard text-token rates only. Cached input, tools, long-context premiums, subscriptions, and provider-specific discounts are excluded.",
+  "models": {
+    "gpt-6-astra": { "input_usd": 10, "output_usd": 50 },
+    "gpt-5.6": { "input_usd": 4, "output_usd": 20 },
+    "gpt-5.6-sol": { "input_usd": 4, "output_usd": 20 },
+    "gpt-5.6-terra": { "input_usd": 2, "output_usd": 12 },
+    "gpt-5.6-luna": { "input_usd": 0.2, "output_usd": 1.2 },
+    "gpt-5.2": { "input_usd": 1.75, "output_usd": 14 },
+    "gpt-5.2-chat-latest": { "input_usd": 1.75, "output_usd": 14 },
+    "gpt-5.1": { "input_usd": 1.25, "output_usd": 10 },
+    "gpt-5.1-chat-latest": { "input_usd": 1.25, "output_usd": 10 },
+    "gpt-5": { "input_usd": 1.25, "output_usd": 10 },
+    "gpt-5-chat-latest": { "input_usd": 1.25, "output_usd": 10 },
+    "gpt-5-mini": { "input_usd": 0.25, "output_usd": 2 },
+    "gpt-5-nano": { "input_usd": 0.05, "output_usd": 0.4 }
+  }
+}

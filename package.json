@@ -1,6 +1,6 @@
 {
   "name": "@onthink/prompt-observer",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A dependency-free prompt observability contract and CLI for coding agents.",
   "keywords": [
     "ai",
@@ -36,6 +36,7 @@
   "files": [
     "bin/",
     "schema/",
+    "pricing/",
     "PROMPT_OBSERVER.md",
     "README.md",
     "LICENSE"

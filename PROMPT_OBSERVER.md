@@ -7,9 +7,9 @@ Follow this contract after every user-requested task. Complete the task first, t
 1. Use only information visible in the conversation, tool results, file changes, and verification output.
 2. Never store the full user prompt, the full assistant response, system instructions, private reasoning, chain-of-thought, credentials, access tokens, or other secrets.
 3. `prompt_summary` must be a short, redacted description of the request, not a quotation or close reproduction.
-4. Do not invent the model name, token counts, or cost. Use `null` values with `source: "unavailable"` unless the platform explicitly reports them. Use `source: "estimated"` only when a deterministic tokenizer or pricing tool produced the value, and name that tool in `estimation_method`.
+4. Prefer platform-reported usage. When it is unavailable, estimate token counts only from the visible user input and final response with the deterministic heuristic below. Never guess a model name. The logger calculates estimated cost only for an exact model match in `.prompt-observer/pricing.json`.
 5. Base execution signals only on observed results. Do not claim a file changed or a test passed without evidence.
-6. Use schema version `1.0` and conform to `.prompt-observer/event.schema.json`.
+6. Use schema version `1.1` and conform to `.prompt-observer/event.schema.json`.
 7. Do not manufacture criticism. If the prompt is clear and sufficient for the task, keep `weaknesses` and `improvement_suggestions` empty.
 8. Evaluate against objective task requirements, not personal preferences about wording, tone, verbosity, formatting, workflow, or technology choices.
 
@@ -53,6 +53,31 @@ If writing files or running the logger is unavailable, do not pretend the event 
 
 Score only prompt quality. Do not lower a score because implementation was difficult when the request itself was clear.
 
+## Structured insights
+
+In schema `1.1`, every strength and improvement suggestion is an object with:
+
+- `category`: one of `intent_clarity`, `context_sufficiency`, `scope_definition`, `constraints_quality`, `acceptance_criteria`, `verification_plan`, `output_format`, or `other`
+- `message`: one concise, evidence-based observation
+
+Legacy schema `1.0` events with string arrays remain readable, but all new events must use the structured `1.1` form.
+
+## Usage precedence and estimation
+
+1. If the platform reports any model, token, or cost metrics, record only those reported metrics, keep unreported metrics `null`, use `source: "platform_reported"`, and keep `estimation_method: null`.
+2. Otherwise, if the Agent can inspect the complete visible user input and its final response, estimate each side independently using `agent_text_heuristic_v1`:
+   - Ignore whitespace.
+   - Count ASCII letters and digits as `characters / 4`.
+   - Count non-ASCII letters, digits, and combining marks as `characters / 2`.
+   - Count punctuation and symbols as `characters / 2`.
+   - Add the three values and round up to the next integer.
+3. Store the two counts with `source: "estimated"` and `estimation_method: "agent_text_heuristic_v1"`.
+4. Set `model` only when the runtime explicitly identifies it. Never infer a model from the product name.
+5. Leave `cost_usd: null`. During `log`, the CLI fills it only when both token counts exist and `model` exactly matches `.prompt-observer/pricing.json`; the pricing snapshot identifier is then appended to `estimation_method`.
+6. If neither reported nor safely estimated usage is available, keep all metrics `null`, use `source: "unavailable"`, and keep `estimation_method: null`.
+
+Estimated usage is directional, not billing data. Never include hidden system instructions, tool payloads, cached-token adjustments, subscription fees, or guessed reasoning tokens in the estimate.
+
 ## Evidence threshold and neutrality
 
 - Record a weakness only when a concrete omission, ambiguity, contradiction, or constraint creates a meaningful risk of wrong execution, wasted work, or unverifiable completion.
@@ -66,7 +91,7 @@ Score only prompt quality. Do not lower a score because implementation was diffi
 
 ```json
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "event_id": "evt-20260901-7f3a92c1",
   "timestamp": "2026-09-01T12:00:00.000Z",
   "task_type": "coding",
@@ -79,7 +104,10 @@ Score only prompt quality. Do not lower a score because implementation was diffi
   "verification_plan": 9,
   "ambiguity_risk": "low",
   "strengths": [
-    "The requested deliverables and runtime constraints are explicit."
+    {
+      "category": "constraints_quality",
+      "message": "The requested deliverables and runtime constraints are explicit."
+    }
   ],
   "weaknesses": [],
   "improvement_suggestions": [],
@@ -97,11 +125,11 @@ Score only prompt quality. Do not lower a score because implementation was diffi
   },
   "usage": {
     "model": null,
-    "input_tokens": null,
-    "output_tokens": null,
+    "input_tokens": 280,
+    "output_tokens": 640,
     "cost_usd": null,
-    "source": "unavailable",
-    "estimation_method": null
+    "source": "estimated",
+    "estimation_method": "agent_text_heuristic_v1"
   }
 }
 ```

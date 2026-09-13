@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "event_id": "evt-example-0001",
   "timestamp": "2026-09-01T12:00:00.000Z",
   "task_type": "coding",
@@ -12,7 +12,10 @@
   "verification_plan": 9,
   "ambiguity_risk": "low",
   "strengths": [
-    "The desired behavior and storage format are clear."
+    {
+      "category": "intent_clarity",
+      "message": "The desired behavior and storage format are clear."
+    }
   ],
   "weaknesses": [],
   "improvement_suggestions": [],

@@ -1,47 +1,22 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://prompt-observer.local/schema/event-1.0.json",
+  "$id": "https://prompt-observer.local/schema/event-1.1.json",
   "title": "Prompt Observer Event",
+  "description": "Supports legacy 1.0 events and structured 1.1 events.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version",
-    "event_id",
-    "timestamp",
-    "task_type",
-    "prompt_summary",
-    "intent_clarity",
-    "context_sufficiency",
-    "scope_definition",
-    "constraints_quality",
-    "acceptance_criteria",
-    "verification_plan",
-    "ambiguity_risk",
-    "strengths",
-    "weaknesses",
-    "improvement_suggestions",
-    "execution_signals",
-    "usage"
+    "schema_version", "event_id", "timestamp", "task_type", "prompt_summary",
+    "intent_clarity", "context_sufficiency", "scope_definition",
+    "constraints_quality", "acceptance_criteria", "verification_plan",
+    "ambiguity_risk", "strengths", "weaknesses", "improvement_suggestions",
+    "execution_signals", "usage"
   ],
   "properties": {
-    "schema_version": { "const": "1.0" },
-    "event_id": {
-      "type": "string",
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$"
-    },
+    "schema_version": { "enum": ["1.0", "1.1"] },
+    "event_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" },
     "timestamp": { "type": "string", "format": "date-time" },
-    "task_type": {
-      "enum": [
-        "coding",
-        "debugging",
-        "planning",
-        "review",
-        "testing",
-        "documentation",
-        "refactoring",
-        "other"
-      ]
-    },
+    "task_type": { "enum": ["coding", "debugging", "planning", "review", "testing", "documentation", "refactoring", "other"] },
     "prompt_summary": { "type": "string", "minLength": 1, "maxLength": 500 },
     "intent_clarity": { "$ref": "#/$defs/score" },
     "context_sufficiency": { "$ref": "#/$defs/score" },
@@ -50,59 +25,30 @@
     "acceptance_criteria": { "$ref": "#/$defs/score" },
     "verification_plan": { "$ref": "#/$defs/score" },
     "ambiguity_risk": { "enum": ["low", "medium", "high"] },
-    "strengths": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/shortText" },
-      "maxItems": 10
-    },
+    "strengths": { "type": "array", "maxItems": 10 },
     "weaknesses": {
-      "type": "array",
-      "maxItems": 10,
+      "type": "array", "maxItems": 10,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
+        "type": "object", "additionalProperties": false,
         "required": ["category", "severity", "message"],
         "properties": {
-          "category": {
-            "enum": [
-              "missing_context",
-              "ambiguous_goal",
-              "undefined_scope",
-              "missing_constraints",
-              "missing_acceptance_criteria",
-              "missing_verification",
-              "missing_output_format",
-              "conflicting_requirements",
-              "other"
-            ]
-          },
+          "category": { "$ref": "#/$defs/weaknessCategory" },
           "severity": { "enum": ["low", "medium", "high"] },
           "message": { "$ref": "#/$defs/shortText" }
         }
       }
     },
-    "improvement_suggestions": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/shortText" },
-      "maxItems": 10
-    },
+    "improvement_suggestions": { "type": "array", "maxItems": 10 },
     "execution_signals": {
-      "type": "object",
-      "additionalProperties": false,
+      "type": "object", "additionalProperties": false,
       "required": ["result_status", "files_changed", "tests_run"],
       "properties": {
         "result_status": { "enum": ["completed", "partial", "blocked"] },
-        "files_changed": {
-          "type": "array",
-          "items": { "type": "string", "minLength": 1, "maxLength": 500 },
-          "maxItems": 500
-        },
+        "files_changed": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 500 }, "maxItems": 500 },
         "tests_run": {
-          "type": "array",
-          "maxItems": 100,
+          "type": "array", "maxItems": 100,
           "items": {
-            "type": "object",
-            "additionalProperties": false,
+            "type": "object", "additionalProperties": false,
             "required": ["name", "status"],
             "properties": {
               "name": { "type": "string", "minLength": 1, "maxLength": 500 },
@@ -113,16 +59,8 @@
       }
     },
     "usage": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "model",
-        "input_tokens",
-        "output_tokens",
-        "cost_usd",
-        "source",
-        "estimation_method"
-      ],
+      "type": "object", "additionalProperties": false,
+      "required": ["model", "input_tokens", "output_tokens", "cost_usd", "source", "estimation_method"],
       "properties": {
         "model": { "type": ["string", "null"], "maxLength": 200 },
         "input_tokens": { "type": ["integer", "null"], "minimum": 0 },
@@ -133,8 +71,34 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "schema_version": { "const": "1.0" } } },
+      "then": { "properties": {
+        "strengths": { "items": { "$ref": "#/$defs/shortText" } },
+        "improvement_suggestions": { "items": { "$ref": "#/$defs/shortText" } }
+      } }
+    },
+    {
+      "if": { "properties": { "schema_version": { "const": "1.1" } } },
+      "then": { "properties": {
+        "strengths": { "items": { "$ref": "#/$defs/insight" } },
+        "improvement_suggestions": { "items": { "$ref": "#/$defs/insight" } }
+      } }
+    }
+  ],
   "$defs": {
     "score": { "type": "integer", "minimum": 0, "maximum": 10 },
-    "shortText": { "type": "string", "minLength": 1, "maxLength": 500 }
+    "shortText": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "insightCategory": { "enum": ["intent_clarity", "context_sufficiency", "scope_definition", "constraints_quality", "acceptance_criteria", "verification_plan", "output_format", "other"] },
+    "weaknessCategory": { "enum": ["missing_context", "ambiguous_goal", "undefined_scope", "missing_constraints", "missing_acceptance_criteria", "missing_verification", "missing_output_format", "conflicting_requirements", "other"] },
+    "insight": {
+      "type": "object", "additionalProperties": false,
+      "required": ["category", "message"],
+      "properties": {
+        "category": { "$ref": "#/$defs/insightCategory" },
+        "message": { "$ref": "#/$defs/shortText" }
+      }
+    }
   }
 }
