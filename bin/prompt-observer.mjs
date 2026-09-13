@@ -350,6 +350,16 @@ async function writeUnlessPresent(destination, content, actions) {
   actions.push("created " + destination);
 }
 
+async function ensureIgnoreEntries(ignorePath, entries, actions) {
+  const current = (await exists(ignorePath)) ? await readFile(ignorePath, "utf8") : "";
+  const lines = new Set(current.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
+  const missing = entries.filter((entry) => !lines.has(entry));
+  if (missing.length === 0) return;
+  const prefix = current.length > 0 && !current.endsWith("\n") ? "\n" : "";
+  await writeFile(ignorePath, current + prefix + missing.join("\n") + "\n", "utf8");
+  actions.push("updated " + ignorePath);
+}
+
 export async function initProject(targetPath) {
   const target = resolve(targetPath ?? ".");
   const observerDirectory = join(target, ".prompt-observer");
@@ -364,13 +374,59 @@ export async function initProject(targetPath) {
   await copyUnlessPresent(selfPath, join(observerDirectory, "prompt-observer.mjs"), actions);
   await writeUnlessPresent(
     join(observerDirectory, ".gitignore"),
-    ["events.jsonl", "report.md", "report.html", "pending/", "*.tmp", ""].join("\n"),
+    ["events.jsonl", "report.md", "report.html", "pending/", "backups/", "*.tmp", ""].join("\n"),
     actions,
   );
   const eventsFile = join(observerDirectory, "events.jsonl");
   const file = await open(eventsFile, "a");
   await file.close();
   actions.push((await stat(eventsFile)).size === 0 ? "ready " + eventsFile : "kept " + eventsFile);
+  return { target, observerDirectory, actions };
+}
+
+export async function upgradeProject(targetPath) {
+  const target = resolve(targetPath ?? ".");
+  const observerDirectory = join(target, ".prompt-observer");
+  if (!(await exists(observerDirectory))) {
+    throw new Error("Prompt Observer is not initialized at " + target + ". Run init first.");
+  }
+
+  const resources = await findResourceRoot();
+  const selfPath = fileURLToPath(import.meta.url);
+  const actions = [];
+  const contractPath = join(observerDirectory, "PROMPT_OBSERVER.md");
+
+  if (await exists(contractPath)) {
+    const [existingContract, packagedContract] = await Promise.all([
+      readFile(contractPath, "utf8"),
+      readFile(resources.contract, "utf8"),
+    ]);
+    if (existingContract !== packagedContract) {
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const backupDirectory = join(observerDirectory, "backups", stamp);
+      await mkdir(backupDirectory, { recursive: true });
+      const backupPath = join(backupDirectory, "PROMPT_OBSERVER.md");
+      await writeFile(backupPath, existingContract, "utf8");
+      actions.push("backed up custom contract to " + backupPath);
+    }
+  }
+
+  const managedFiles = [
+    [resources.contract, contractPath],
+    [resources.schema, join(observerDirectory, "event.schema.json")],
+    [resources.pricing, join(observerDirectory, "pricing.json")],
+    [selfPath, join(observerDirectory, "prompt-observer.mjs")],
+  ];
+  for (const [source, destination] of managedFiles) {
+    if (resolve(source) !== resolve(destination)) await copyFile(source, destination);
+    actions.push("updated " + destination);
+  }
+
+  await ensureIgnoreEntries(
+    join(observerDirectory, ".gitignore"),
+    ["events.jsonl", "report.md", "report.html", "pending/", "backups/", "*.tmp"],
+    actions,
+  );
   return { target, observerDirectory, actions };
 }
 
@@ -1013,6 +1069,7 @@ function printHelp() {
     "",
     "Usage:",
     "  prompt-observer init <target-path>",
+    "  prompt-observer upgrade <target-path>",
     "  prompt-observer log <event-file> [--target <target-path>]",
     "  prompt-observer report [target-path] [--limit <count> | --all]",
     "  prompt-observer validate <event-file>",
@@ -1049,6 +1106,11 @@ export async function runCli(args) {
   if (command === "init") {
     const result = await initProject(rest[0] ?? ".");
     process.stdout.write("Initialized Prompt Observer at " + result.observerDirectory + "\n" + result.actions.join("\n") + "\n");
+    return;
+  }
+  if (command === "upgrade") {
+    const result = await upgradeProject(rest[0] ?? ".");
+    process.stdout.write("Upgraded Prompt Observer at " + result.observerDirectory + "\n" + result.actions.join("\n") + "\n");
     return;
   }
   if (command === "validate") {

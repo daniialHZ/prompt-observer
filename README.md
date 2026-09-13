@@ -42,6 +42,16 @@ Read and follow `.prompt-observer/PROMPT_OBSERVER.md` after every user-requested
 
 Prompt Observer does not modify vendor-specific instruction files in v1. Add the line to whichever project-instruction mechanism your agent already uses.
 
+## Update an existing project
+
+After a new package version is published, update an initialized project with one command:
+
+```powershell
+npx @onthink/prompt-observer@latest upgrade .
+```
+
+`upgrade` replaces only the managed contract, schema, pricing snapshot, and portable CLI. It never changes or removes `events.jsonl`, pending events, or generated reports. If `PROMPT_OBSERVER.md` was customized, the previous copy is saved under `.prompt-observer/backups/` before the packaged contract is installed.
+
 ## How it works
 
 ```text
@@ -125,7 +135,7 @@ Use it without installing it globally:
 npx @onthink/prompt-observer init .
 ```
 
-Running `init` again is safe: it preserves existing Prompt Observer files and adds only missing files.
+Running `init` again is safe: it preserves existing Prompt Observer files and adds only missing files. Use `upgrade` when you intentionally want to replace managed files with the newest package versions.
 
 ## Development
 

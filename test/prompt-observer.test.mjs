@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -12,6 +12,7 @@ import {
   generateReport,
   initProject,
   logEvent,
+  upgradeProject,
   validateEvent,
 } from "../bin/prompt-observer.mjs";
 
@@ -156,6 +157,33 @@ test("initializes a portable project with dashboard and pricing resources", asyn
   await writeFile(join(observer, "PROMPT_OBSERVER.md"), "custom contract", "utf8");
   await initProject(workspace);
   assert.equal(await readFile(join(observer, "PROMPT_OBSERVER.md"), "utf8"), "custom contract");
+});
+
+test("upgrades managed files with one command while preserving events and backing up a custom contract", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "prompt-observer-upgrade-"));
+  const initialized = await initProject(workspace);
+  const observer = initialized.observerDirectory;
+  const eventsPath = join(observer, "events.jsonl");
+  await writeFile(eventsPath, "preserve-this-event-log\n", "utf8");
+  await writeFile(join(observer, "PROMPT_OBSERVER.md"), "custom project contract", "utf8");
+  await writeFile(join(observer, "event.schema.json"), "{\"old\":true}", "utf8");
+  await writeFile(join(observer, "pricing.json"), "{\"old\":true}", "utf8");
+  await writeFile(join(observer, "prompt-observer.mjs"), "// old runtime", "utf8");
+
+  const result = await upgradeProject(workspace);
+  assert.ok(result.actions.some((action) => action.includes("backed up custom contract")));
+  assert.equal(await readFile(eventsPath, "utf8"), "preserve-this-event-log\n");
+  assert.match(await readFile(join(observer, "PROMPT_OBSERVER.md"), "utf8"), /schema `1\.1`/);
+  assert.match(await readFile(join(observer, "event.schema.json"), "utf8"), /structured 1\.1/);
+  assert.match(await readFile(join(observer, "pricing.json"), "utf8"), /gpt-5\.6-luna/);
+  assert.match(await readFile(join(observer, "prompt-observer.mjs"), "utf8"), /upgradeProject/);
+  assert.match(await readFile(join(observer, ".gitignore"), "utf8"), /backups\//);
+  const backupFolders = await readdir(join(observer, "backups"));
+  assert.equal(backupFolders.length, 1);
+  assert.equal(
+    await readFile(join(observer, "backups", backupFolders[0], "PROMPT_OBSERVER.md"), "utf8"),
+    "custom project contract",
+  );
 });
 
 test("logs events, enriches model-matched estimated cost, and rejects duplicates", async () => {
